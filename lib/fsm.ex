@@ -39,14 +39,14 @@ defmodule Fsm do
     end
   end
 
-  def next_state(state), do: {:action_responses, [next_state: state]}
-  def next_state(state, data), do: {:action_responses, [next_state: state, new_data: data]}
+  def transition(state), do: {:action_responses, [next_state: state]}
+  def transition(state, data), do: {:action_responses, [next_state: state, new_data: data]}
 
   def respond(response), do: {:action_responses, [respond: response]}
   def respond(response, state), do: {:action_responses, [next_state: state, respond: response]}
   def respond(response, state, data), do: {:action_responses, [next_state: state, new_data: data, respond: response]}
 
-  defmacro defstate(state, state_def) do
+  defmacro state(state, state_def) do
     quote do
       state_name = case unquote(Macro.escape(state, unquote: true)) do
         name when is_atom(name) -> name
@@ -59,11 +59,11 @@ defmodule Fsm do
     end
   end
 
-  defmacro defevent(event) do
+  defmacro event(event) do
     decl_event(event, false)
   end
 
-  defmacro defeventp(event) do
+  defmacro eventp(event) do
     decl_event(event, true)
   end
 
@@ -85,19 +85,19 @@ defmodule Fsm do
     end
   end
 
-  defmacro defevent(event, opts) do
+  defmacro event(event, opts) do
     do_defevent(event, opts, opts[:do])
   end
 
-  defmacro defevent(event, opts, do: event_def) do
+  defmacro event(event, opts, do: event_def) do
     do_defevent(event, opts, event_def)
   end
 
-  defmacro defeventp(event, opts) do
+  defmacro eventp(event, opts) do
     do_defevent(event, [{:private, true} | opts], opts[:do])
   end
 
-  defmacro defeventp(event, opts, do: event_def) do
+  defmacro eventp(event, opts, do: event_def) do
     do_defevent(event, [{:private, true} | opts], event_def)
   end
 

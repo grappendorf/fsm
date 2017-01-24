@@ -4,15 +4,15 @@ defmodule FsmTest do
   defmodule BasicFsm do
     use Fsm, initial_state: :stopped
 
-    defstate stopped do
-      defevent run do
-        next_state(:running)
+    state stopped do
+      event run do
+        transition(:running)
       end
     end
 
-    defstate running do
-      defevent stop do
-        next_state(:stopped)
+    state running do
+      event stop do
+        transition(:stopped)
       end
     end
   end
@@ -45,9 +45,9 @@ defmodule FsmTest do
   defmodule PrivateFsm do
     use Fsm, initial_state: :stopped
 
-    defstate stopped do
-      defeventp run do
-        next_state(:running)
+    state stopped do
+      eventp run do
+        transition(:running)
       end
     end
 
@@ -72,27 +72,27 @@ defmodule FsmTest do
   defmodule GlobalHandlers do
     use Fsm, initial_state: :stopped
 
-    defstate stopped do
-      defevent undefined_event1
-      defevent undefined_event2/2
+    state stopped do
+      event undefined_event1
+      event undefined_event2/2
 
-      defevent run do
-        next_state(:running)
+      event run do
+        transition(:running)
       end
 
-      defevent _ do
-        next_state(:invalid1)
-      end
-    end
-
-    defstate running do
-      defevent stop do
-        next_state(:stopped)
+      event _ do
+        transition(:invalid1)
       end
     end
 
-    defevent _ do
-      next_state(:invalid2)
+    state running do
+      event stop do
+        transition(:stopped)
+      end
+    end
+
+    event _ do
+      transition(:invalid2)
     end
   end
 
@@ -116,19 +116,19 @@ defmodule FsmTest do
   defmodule DataFsm do
     use Fsm, initial_state: :stopped, initial_data: 0
 
-    defstate stopped do
-      defevent run(speed) do
-        next_state(:running, speed)
+    state stopped do
+      event run(speed) do
+        transition(:running, speed)
       end
     end
 
-    defstate running do
-      defevent slowdown(by), data: speed do
-        next_state(:running, speed - by)
+    state running do
+      event slowdown(by), data: speed do
+        transition(:running, speed - by)
       end
 
-      defevent stop do
-        next_state(:stopped, 0)
+      event stop do
+        transition(:stopped, 0)
       end
     end
   end
@@ -165,22 +165,22 @@ defmodule FsmTest do
   defmodule ResponseFsm do
     use Fsm, initial_state: :stopped, initial_data: 0
 
-    defstate stopped do
-      defevent run(speed) do
+    state stopped do
+      event run(speed) do
         respond(:ok, :running, speed)
       end
 
-      defevent _ do
+      event _ do
         respond(:error)
       end
     end
 
-    defstate running do
-      defevent stop do
+    state running do
+      event stop do
         respond(:ok, :stopped, 0)
       end
 
-      defevent _ do
+      event _ do
         respond(:error, :invalid)
       end
     end
@@ -209,31 +209,31 @@ defmodule FsmTest do
   defmodule PatternMatch do
     use Fsm, initial_state: :running, initial_data: 10
 
-    defstate running do
-      defevent toggle_speed, data: d, when: d == 10 do
-        next_state(:running, 50)
+    state running do
+      event toggle_speed, data: d, when: d == 10 do
+        transition(:running, 50)
       end
 
-      defevent toggle_speed, data: 50 do
-        next_state(:running, 10)
+      event toggle_speed, data: 50 do
+        transition(:running, 10)
       end
 
-      defevent set_speed(1) do
-        next_state(:running, 10)
+      event set_speed(1) do
+        transition(:running, 10)
       end
 
-      defevent set_speed(x), when: x == 2 do
-        next_state(:running, 50)
+      event set_speed(x), when: x == 2 do
+        transition(:running, 50)
       end
 
-      defevent stop, do: next_state(:stopped)
+      event stop, do: transition(:stopped)
     end
 
-    defevent dummy, state: :stopped do
+    event dummy, state: :stopped do
       respond(:dummy)
     end
 
-    defevent _, event: :toggle_speed do
+    event _, event: :toggle_speed do
       respond(:error)
     end
   end
@@ -311,10 +311,10 @@ defmodule FsmTest do
     ]
 
     for {state, transitions} <- fsm do
-      defstate unquote(state) do
+      state unquote(state) do
         for {event, target_state} <- transitions do
-          defevent unquote(event) do
-            next_state(unquote(target_state))
+          event unquote(event) do
+            transition(unquote(target_state))
           end
         end
       end
