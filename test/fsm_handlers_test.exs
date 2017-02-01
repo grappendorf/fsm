@@ -29,16 +29,16 @@ defmodule FsmHandlersTest do
   end
 
   test "leave handler" do
-      assert(
-        FsmWithHandlers.new
-        |> FsmWithHandlers.leave_state
-        |> FsmWithHandlers.data == %{handler: :leave})
+    assert(
+      FsmWithHandlers.new
+      |> FsmWithHandlers.leave_state
+      |> FsmWithHandlers.data == %{handler: :leave})
   end
 
   test "enter handler" do
-      assert(
-        FsmWithHandlers.new
-        |> FsmWithHandlers.enter_state
-        |> FsmWithHandlers.data == %{handler: :enter})
+    assert(
+      FsmWithHandlers.new
+      |> FsmWithHandlers.enter_state
+      |> FsmWithHandlers.data == %{handler: :enter})
   end
 end
