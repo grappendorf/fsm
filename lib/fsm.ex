@@ -26,7 +26,15 @@ defmodule Fsm do
       end
 
       defp handle_action_response(fsm, {:next_state, next_state}) do
-        %__MODULE__{fsm | state: next_state}
+        data = case leave(fsm, fsm.state) do
+          {:action_responses, [new_data: new_data]} -> new_data
+          _ -> fsm.data
+        end
+        data = case enter(%{fsm | data: data}, next_state) do
+          {:action_responses, [new_data: new_data]} -> new_data
+          _ -> data
+        end
+        %__MODULE__{fsm | state: next_state, data: data}
       end
 
       defp handle_action_response(fsm, {:new_data, new_data}) do
@@ -36,10 +44,20 @@ defmodule Fsm do
       defp handle_action_response(fsm, {:respond, response}) do
         {response, fsm}
       end
+
+      @before_compile Fsm
     end
   end
 
-  def transition(state), do: {:action_responses, [next_state: state]}
+  defmacro __before_compile__(_) do
+    quote do
+      defp enter(_, _), do: nil
+      defp leave(_, _), do: nil
+    end
+  end
+
+  def transition(state) when is_atom(state), do: {:action_responses, [next_state: state]}
+  def transition(data), do: {:action_responses, [new_data: data]}
   def transition(state, data), do: {:action_responses, [next_state: state, new_data: data]}
 
   def respond(response), do: {:action_responses, [respond: response]}
@@ -184,6 +202,34 @@ defmodule Fsm do
         def transition(unquote_splicing(transition_args)) when unquote(guard), do: unquote(body)
       else
         def transition(unquote_splicing(transition_args)), do: unquote(body)
+      end
+    end
+  end
+
+  defmacro on(handler_decl, opts) do
+    do_defhandler(handler_decl, opts, opts[:do])
+  end
+
+  defmacro on(handler_decl, opts, do: handler_def) do
+    do_defhandler(handler_decl, opts, handler_def)
+  end
+
+  defp do_defhandler handler_decl, opts, handler_def do
+    handler_name = case handler_decl do
+      name when is_atom(name) -> name
+      {name, _, _} -> name
+    end
+    data_arg = opts[:data]
+    fsm_arg = if data_arg do
+      quote do
+        %__MODULE__{data: var!(unquote(data_arg))} = fsm
+      end
+    else
+      quote do: fsm
+    end
+    quote do
+      defp unquote(handler_name)(unquote(fsm_arg), @declaring_state) do
+        unquote(handler_def)
       end
     end
   end
