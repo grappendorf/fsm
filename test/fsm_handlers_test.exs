@@ -5,6 +5,10 @@ defmodule FsmHandlersTest do
     use Fsm, initial_state: :start, initial_data: %{handler: nil}
 
     state start do
+      on enter, data: data do
+        transition(%{data | handler: :enter})
+      end
+
       on leave, data: data do
         transition(%{data | handler: :leave})
       end
@@ -15,6 +19,10 @@ defmodule FsmHandlersTest do
 
       event enter_state do
         transition(:stop_with_handler)
+      end
+
+      event same_state do
+        transition(:start)
       end
     end
 
@@ -40,5 +48,12 @@ defmodule FsmHandlersTest do
       FsmWithHandlers.new
       |> FsmWithHandlers.enter_state
       |> FsmWithHandlers.data == %{handler: :enter})
+  end
+
+  test "don't call handlers when transitioning to the same state" do
+    assert(
+      FsmWithHandlers.new
+      |> FsmWithHandlers.same_state
+      |> FsmWithHandlers.data == %{handler: nil})
   end
 end

@@ -26,15 +26,19 @@ defmodule Fsm do
       end
 
       defp handle_action_response(fsm, {:next_state, next_state}) do
-        data = case leave(fsm, fsm.state) do
-          {:action_responses, [new_data: new_data]} -> new_data
-          _ -> fsm.data
+        if fsm.state != next_state do
+          data = case leave(fsm, fsm.state) do
+            {:action_responses, [new_data: new_data]} -> new_data
+            _ -> fsm.data
+          end
+          data = case enter(%{fsm | data: data}, next_state) do
+            {:action_responses, [new_data: new_data]} -> new_data
+            _ -> data
+          end
+          %__MODULE__{fsm | state: next_state, data: data}
+        else
+          %__MODULE__{fsm | state: next_state}
         end
-        data = case enter(%{fsm | data: data}, next_state) do
-          {:action_responses, [new_data: new_data]} -> new_data
-          _ -> data
-        end
-        %__MODULE__{fsm | state: next_state, data: data}
       end
 
       defp handle_action_response(fsm, {:new_data, new_data}) do
